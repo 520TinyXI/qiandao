@@ -173,17 +173,29 @@ class SignManager:
         )
     
     @staticmethod
-    def format_user_info(user_data: Dict[str, Any], group_rank: int, world_rank: int) -> str:
-        """格式化用户信息"""
+    def format_user_info(user_data: Dict[str, Any]) -> str:
+        """格式化用户信息 - 移除排名信息"""
         return (
             f"个人信息\n"
+            f"====================\n"
             f"等级：{user_data.get('level', 1)}\n"
             f"经验：{user_data.get('exp', 0)}/{user_data.get('next_level_exp', 200)}\n"
             f"金币：{user_data.get('coins', 0)}\n"
             f"累计签到：{user_data.get('total_days', 0)}天\n"
-            f"连续签到：{user_data.get('continuous_days', 0)}天\n"
-            f"本群排名：第{group_rank}名\n"
-            f"世界排名：第{world_rank}名"
+            f"连续签到：{user_data.get('continuous_days', 0)}天"
+        )
+    
+    @staticmethod
+    def format_my_ranking(group_total_rank: int, world_total_rank: int, 
+                          continuous_rank: int, level_rank: int) -> str:
+        """格式化我的排名信息"""
+        return (
+            f"我的排行榜\n"
+            f"====================\n"
+            f"本群总签到排名: 第{group_total_rank}名\n"
+            f"世界总签到排名: 第{world_total_rank}名\n"
+            f"连续签到排名: 第{continuous_rank}名\n"
+            f"等级排名: 第{level_rank}名"
         )
     
     @staticmethod

@@ -94,10 +94,20 @@ class SignDatabase:
         self.conn.commit()
         
     def get_user_name(self, user_id: str, group_id: str = None) -> str:
-        """获取用户昵称"""
-        self.cursor.execute('SELECT user_name FROM user_names WHERE user_id = ? AND group_id = ?', (user_id, group_id))
+        """获取用户昵称 - 添加缓存逻辑"""
+        # 优先从user_names表获取
+        if group_id:
+            self.cursor.execute('SELECT user_name FROM user_names WHERE user_id = ? AND group_id = ?',
+                              (user_id, group_id))
+        else:
+            self.cursor.execute('SELECT user_name FROM user_names WHERE user_id = ?', (user_id,))
+        
         row = self.cursor.fetchone()
-        return row[0] if row else user_id
+        if row:
+            return row[0]
+        
+        # 如果没有记录，返回用户ID
+        return user_id
 
     def log_sign(self, user_id: str, exp: int, coins: int):
         """记录签到历史"""

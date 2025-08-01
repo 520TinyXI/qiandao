@@ -77,11 +77,7 @@ class AdvancedSignPlugin(Star):
                 yield event.plain_result("您还没有签到过哦~")
                 return
                 
-            # 获取排名信息
-            group_rank = self.db.get_group_sign_rank(group_id, user_id)
-            world_rank = self.db.get_world_sign_rank(user_id)
-            
-            result_text = SignManager.format_user_info(user_data, group_rank, world_rank)
+            result_text = SignManager.format_user_info(user_data)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -272,34 +268,41 @@ class AdvancedSignPlugin(Star):
             
     @filter.command("排行榜")
     async def ranking(self, event: AstrMessageEvent):
-        '''综合排行榜'''
+        '''显示自己在所有排行榜中的排名'''
         try:
+            user_id = event.get_sender_id()
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
-            # 获取总签到排行榜
-            total_ranking_data = self.db.get_total_sign_ranking(group_id, 5)
-            total_ranking_text = SignManager.format_total_ranking(total_ranking_data, self.db, group_id)
+            # 获取用户数据
+            user_data = self.db.get_user_data(user_id)
+            if not user_data:
+                yield event.plain_result("您还没有签到过哦~")
+                return
+                
+            # 获取各项排名
+            group_total_rank = self.db.get_group_sign_rank(group_id, user_id)
+            world_total_rank = self.db.get_world_sign_rank(user_id)
             
-            # 获取连续签到排行榜
-            continuous_ranking_data = self.db.get_continuous_sign_ranking(group_id, 5)
-            continuous_ranking_text = SignManager.format_continuous_ranking(continuous_ranking_data, self.db, group_id)
+            # 获取连续签到排名
+            self.db.cursor.execute('''
+                SELECT COUNT(*) + 1 FROM sign_data
+                WHERE continuous_days > ?
+            ''', (user_data['continuous_days'],))
+            continuous_rank = self.db.cursor.fetchone()[0]
             
-            # 获取等级排行榜
-            level_ranking_data = self.db.get_level_ranking(group_id, 5)
-            level_ranking_text = SignManager.format_level_ranking(level_ranking_data, self.db, group_id)
+            # 获取等级排名
+            self.db.cursor.execute('''
+                SELECT COUNT(*) + 1 FROM sign_data
+                WHERE level > ? OR (level = ? AND exp > ?)
+            ''', (user_data['level'], user_data['level'], user_data['exp']))
+            level_rank = self.db.cursor.fetchone()[0]
             
-            # 获取世界排行榜
-            world_ranking_data = self.db.get_world_sign_ranking(5)
-            world_ranking_text = SignManager.format_world_ranking(world_ranking_data, self.db, None)
-            
-            # 组合所有排行榜文本
-            result_text = (
-                "综合排行榜\n"
-                "=" * 20 + "\n\n"
-                f"{total_ranking_text}\n\n"
-                f"{continuous_ranking_text}\n\n"
-                f"{level_ranking_text}\n\n"
-                f"{world_ranking_text}"
+            # 格式化结果
+            result_text = SignManager.format_my_ranking(
+                group_total_rank=group_total_rank,
+                world_total_rank=world_total_rank,
+                continuous_rank=continuous_rank,
+                level_rank=level_rank
             )
             
             image_path = await self.img_gen.create_sign_image(result_text)
@@ -309,5 +312,5 @@ class AdvancedSignPlugin(Star):
                     os.remove(image_path)
 
         except Exception as e:
-            logger.error(f"获取综合排行榜失败: {str(e)}")
-            yield event.plain_result("获取综合排行榜失败~请联系管理员检查日志")
+            logger.error(f"获取排行榜失败: {str(e)}")
+            yield event.plain_result("获取排行榜失败~请联系管理员检查日志")
