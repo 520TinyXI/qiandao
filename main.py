@@ -272,15 +272,34 @@ class AdvancedSignPlugin(Star):
             
     @filter.command("排行榜")
     async def ranking(self, event: AstrMessageEvent):
-        '''排行榜指令列表'''
+        '''综合排行榜'''
         try:
+            group_id = event.get_group_id() if event.message_obj.group_id else None
+            
+            # 获取总签到排行榜
+            total_ranking_data = self.db.get_total_sign_ranking(group_id, 5)
+            total_ranking_text = SignManager.format_total_ranking(total_ranking_data, self.db, group_id)
+            
+            # 获取连续签到排行榜
+            continuous_ranking_data = self.db.get_continuous_sign_ranking(group_id, 5)
+            continuous_ranking_text = SignManager.format_continuous_ranking(continuous_ranking_data, self.db, group_id)
+            
+            # 获取等级排行榜
+            level_ranking_data = self.db.get_level_ranking(group_id, 5)
+            level_ranking_text = SignManager.format_level_ranking(level_ranking_data, self.db, group_id)
+            
+            # 获取世界排行榜
+            world_ranking_data = self.db.get_world_sign_ranking(5)
+            world_ranking_text = SignManager.format_world_ranking(world_ranking_data, self.db, None)
+            
+            # 组合所有排行榜文本
             result_text = (
-                "排行榜指令列表\n"
-                "=" * 20 + "\n"
-                "/总排行榜 - 查看总签到排行榜\n"
-                "/连续签到排行榜 - 查看连续签到排行榜\n"
-                "/等级排行榜 - 查看等级排行榜\n"
-                "/世界排行榜 - 查看世界总签到排行榜\n"
+                "综合排行榜\n"
+                "=" * 20 + "\n\n"
+                f"{total_ranking_text}\n\n"
+                f"{continuous_ranking_text}\n\n"
+                f"{level_ranking_text}\n\n"
+                f"{world_ranking_text}"
             )
             
             image_path = await self.img_gen.create_sign_image(result_text)
@@ -290,5 +309,5 @@ class AdvancedSignPlugin(Star):
                     os.remove(image_path)
 
         except Exception as e:
-            logger.error(f"查看排行榜指令列表失败: {str(e)}")
-            yield event.plain_result("查看排行榜指令列表失败~请联系管理员检查日志")
+            logger.error(f"获取综合排行榜失败: {str(e)}")
+            yield event.plain_result("获取综合排行榜失败~请联系管理员检查日志")
