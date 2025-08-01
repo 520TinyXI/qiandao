@@ -21,7 +21,7 @@ class AdvancedSignPlugin(Star):
         '''每日签到'''
         try:
             user_id = event.get_sender_id()
-            group_id = event.get_group_id() if event.is_group() else None
+            group_id = event.get_group_id() if event.message_obj.group_id else None
             today = datetime.date.today().strftime('%Y-%m-%d')
             
             user_data = self.db.get_user_data(user_id)
@@ -70,7 +70,7 @@ class AdvancedSignPlugin(Star):
         '''查看个人信息'''
         try:
             user_id = event.get_sender_id()
-            group_id = event.get_group_id() if event.is_group() else None
+            group_id = event.get_group_id() if event.message_obj.group_id else None
             
             user_data = self.db.get_user_data(user_id)
             if not user_data:
@@ -97,7 +97,7 @@ class AdvancedSignPlugin(Star):
     async def total_ranking(self, event: AstrMessageEvent):
         '''总签到排行榜'''
         try:
-            group_id = event.get_group_id() if event.is_group() else None
+            group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_total_sign_ranking(group_id, 10)
             result_text = SignManager.format_total_ranking(ranking_data)
@@ -116,7 +116,7 @@ class AdvancedSignPlugin(Star):
     async def continuous_ranking(self, event: AstrMessageEvent):
         '''连续签到排行榜'''
         try:
-            group_id = event.get_group_id() if event.is_group() else None
+            group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_continuous_sign_ranking(group_id, 10)
             result_text = SignManager.format_continuous_ranking(ranking_data)
@@ -135,7 +135,7 @@ class AdvancedSignPlugin(Star):
     async def level_ranking(self, event: AstrMessageEvent):
         '''等级排行榜'''
         try:
-            group_id = event.get_group_id() if event.is_group() else None
+            group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_level_ranking(group_id, 10)
             result_text = SignManager.format_level_ranking(ranking_data)
@@ -206,7 +206,7 @@ class AdvancedSignPlugin(Star):
         '''补签'''
         try:
             user_id = event.get_sender_id()
-            group_id = event.get_group_id() if event.is_group() else None
+            group_id = event.get_group_id() if event.message_obj.group_id else None
             args = event.get_message().split()[1:]
             
             try:
