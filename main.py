@@ -292,6 +292,7 @@ class AdvancedSignPlugin(Star):
             self.db.cursor.execute('''
                 SELECT COUNT(*) + 1 FROM sign_data
                 WHERE continuous_days > ?
+                ORDER BY continuous_days DESC
             ''', (user_data['continuous_days'],))
             continuous_rank_row = self.db.cursor.fetchone()
             continuous_rank = continuous_rank_row[0] if continuous_rank_row else 1
@@ -300,6 +301,7 @@ class AdvancedSignPlugin(Star):
             self.db.cursor.execute('''
                 SELECT COUNT(*) + 1 FROM sign_data
                 WHERE level > ? OR (level = ? AND exp > ?)
+                ORDER BY level DESC, exp DESC
             ''', (user_data['level'], user_data['level'], user_data['exp']))
             level_rank_row = self.db.cursor.fetchone()
             level_rank = level_rank_row[0] if level_rank_row else 1
