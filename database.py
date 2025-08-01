@@ -181,8 +181,9 @@ class SignDatabase:
         
     def get_group_sign_rank(self, group_id: str, user_id: str) -> int:
         """获取群内签到排名（修复版）"""
+        # 如果没有群组ID，则返回世界排名
         if not group_id:
-            return 0
+            return self.get_world_sign_rank(user_id)
         
         # 获取当前用户的总签到天数
         self.cursor.execute('SELECT total_days FROM sign_data WHERE user_id = ?', (user_id,))
@@ -197,6 +198,10 @@ class SignDatabase:
             WHERE group_id = ? AND total_days > ? 
         ''', (group_id, user_total_days))
         row = self.cursor.fetchone()
+        
+        # 添加调试日志
+        logger.debug(f"get_group_sign_rank: group_id={group_id}, user_id={user_id}, user_total_days={user_total_days}, count={row[0] if row else 'None'}")
+        
         return row[0] + 1 if row else 1  # 排名 = 比自己多的用户数 + 1
         
     def get_world_sign_rank(self, user_id: str) -> int:
