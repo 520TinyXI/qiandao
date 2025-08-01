@@ -100,7 +100,7 @@ class AdvancedSignPlugin(Star):
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_total_sign_ranking(group_id, 10)
-            result_text = SignManager.format_total_ranking(ranking_data)
+            result_text = SignManager.format_total_ranking(ranking_data, self.db, group_id)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -119,7 +119,7 @@ class AdvancedSignPlugin(Star):
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_continuous_sign_ranking(group_id, 10)
-            result_text = SignManager.format_continuous_ranking(ranking_data)
+            result_text = SignManager.format_continuous_ranking(ranking_data, self.db, group_id)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -138,7 +138,7 @@ class AdvancedSignPlugin(Star):
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_level_ranking(group_id, 10)
-            result_text = SignManager.format_level_ranking(ranking_data)
+            result_text = SignManager.format_level_ranking(ranking_data, self.db, group_id)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -155,7 +155,7 @@ class AdvancedSignPlugin(Star):
         '''世界总签到排行榜'''
         try:
             ranking_data = self.db.get_world_sign_ranking(10)
-            result_text = SignManager.format_world_ranking(ranking_data)
+            result_text = SignManager.format_world_ranking(ranking_data, self.db, None)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
