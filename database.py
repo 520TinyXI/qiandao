@@ -67,6 +67,13 @@ class SignDatabase:
 
     def update_user_data(self, user_id: str, **kwargs):
         """更新用户数据"""
+        # 确保包含群组信息
+        if 'group_id' not in kwargs:
+            # 尝试获取现有群组信息
+            existing_data = self.get_user_data(user_id)
+            if existing_data and existing_data.get('group_id'):
+                kwargs['group_id'] = existing_data['group_id']
+                
         if not self.get_user_data(user_id):
             self.cursor.execute('INSERT INTO sign_data (user_id) VALUES (?)', (user_id,))
             
@@ -140,49 +147,28 @@ class SignDatabase:
                               (user_id, item_name, quantity))
         self.conn.commit()
         
-    def get_total_sign_ranking(self, group_id: str = None, limit: int = 10) -> List[tuple]:
-        """获取总签到排行榜"""
-        if group_id:
-            self.cursor.execute('''
-                SELECT user_id, total_days FROM sign_data
-                WHERE group_id = ?
-                ORDER BY total_days DESC LIMIT ?
-            ''', (group_id, limit))
-        else:
-            self.cursor.execute('''
-                SELECT user_id, total_days FROM sign_data
-                ORDER BY total_days DESC LIMIT ?
-            ''', (limit,))
+    def get_total_sign_ranking(self, limit: int = 10) -> List[tuple]:
+        """获取总签到排行榜（全局）"""
+        self.cursor.execute('''
+            SELECT user_id, total_days FROM sign_data
+            ORDER BY total_days DESC LIMIT ?
+        ''', (limit,))
         return self.cursor.fetchall()
         
-    def get_continuous_sign_ranking(self, group_id: str = None, limit: int = 10) -> List[tuple]:
-        """获取连续签到排行榜"""
-        if group_id:
-            self.cursor.execute('''
-                SELECT user_id, continuous_days FROM sign_data
-                WHERE group_id = ?
-                ORDER BY continuous_days DESC LIMIT ?
-            ''', (group_id, limit))
-        else:
-            self.cursor.execute('''
-                SELECT user_id, continuous_days FROM sign_data
-                ORDER BY continuous_days DESC LIMIT ?
-            ''', (limit,))
+    def get_continuous_sign_ranking(self, limit: int = 10) -> List[tuple]:
+        """获取连续签到排行榜（全局）"""
+        self.cursor.execute('''
+            SELECT user_id, continuous_days FROM sign_data
+            ORDER BY continuous_days DESC LIMIT ?
+        ''', (limit,))
         return self.cursor.fetchall()
         
-    def get_level_ranking(self, group_id: str = None, limit: int = 10) -> List[tuple]:
-        """获取等级排行榜"""
-        if group_id:
-            self.cursor.execute('''
-                SELECT user_id, level, exp FROM sign_data
-                WHERE group_id = ?
-                ORDER BY level DESC, exp DESC LIMIT ?
-            ''', (group_id, limit))
-        else:
-            self.cursor.execute('''
-                SELECT user_id, level, exp FROM sign_data
-                ORDER BY level DESC, exp DESC LIMIT ?
-            ''', (limit,))
+    def get_level_ranking(self, limit: int = 10) -> List[tuple]:
+        """获取等级排行榜（全局）"""
+        self.cursor.execute('''
+            SELECT user_id, level, exp FROM sign_data
+            ORDER BY level DESC, exp DESC LIMIT ?
+        ''', (limit,))
         return self.cursor.fetchall()
         
     def get_world_sign_ranking(self, limit: int = 10) -> List[tuple]:

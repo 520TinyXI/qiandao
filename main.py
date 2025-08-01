@@ -40,6 +40,7 @@ class AdvancedSignPlugin(Star):
             # 更新用户数据
             self.db.update_user_data(
                 user_id,
+                group_id=group_id,
                 total_days=result['total_days'],
                 last_sign=today,
                 continuous_days=result['continuous_days'],
@@ -48,6 +49,10 @@ class AdvancedSignPlugin(Star):
                 level=result['level'],
                 next_level_exp=result['next_level_exp']
             )
+
+            # 存储用户昵称
+            user_name = event.get_sender_name()
+            self.db.update_user_name(user_id, user_name, group_id)
             
             # 记录签到历史
             self.db.log_sign(user_id, result['exp'], result['coins'])
@@ -95,7 +100,7 @@ class AdvancedSignPlugin(Star):
         try:
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
-            ranking_data = self.db.get_total_sign_ranking(group_id, 10)
+            ranking_data = self.db.get_total_sign_ranking(10)
             result_text = SignManager.format_total_ranking(ranking_data, self.db, group_id)
             
             image_path = await self.img_gen.create_sign_image(result_text)
@@ -114,7 +119,7 @@ class AdvancedSignPlugin(Star):
         try:
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
-            ranking_data = self.db.get_continuous_sign_ranking(group_id, 10)
+            ranking_data = self.db.get_continuous_sign_ranking(10)
             result_text = SignManager.format_continuous_ranking(ranking_data, self.db, group_id)
             
             image_path = await self.img_gen.create_sign_image(result_text)
@@ -133,7 +138,7 @@ class AdvancedSignPlugin(Star):
         try:
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
-            ranking_data = self.db.get_level_ranking(group_id, 10)
+            ranking_data = self.db.get_level_ranking(10)
             result_text = SignManager.format_level_ranking(ranking_data, self.db, group_id)
             
             image_path = await self.img_gen.create_sign_image(result_text)

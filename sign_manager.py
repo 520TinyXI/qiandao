@@ -201,48 +201,48 @@ class SignManager:
     @staticmethod
     def format_total_ranking(ranking_data: List[tuple], db: SignDatabase = None, group_id: str = None) -> str:
         """格式化总签到排行榜"""
+        if not ranking_data:
+            return "总签到排行榜\n暂无签到数据"
         result = "总签到排行榜\n"
         for i, (user_id, total_days) in enumerate(ranking_data, 1):
-            # 获取用户昵称
-            user_name = user_id
-            if db:
-                user_name = db.get_user_name(user_id, group_id) or user_id
+            # 获取用户昵称 - 关键修复
+            user_name = db.get_user_name(user_id, group_id) if db else user_id
             result += f"{i}. {user_name} - {total_days}天\n"
         return result.strip()
     
     @staticmethod
     def format_continuous_ranking(ranking_data: List[tuple], db: SignDatabase = None, group_id: str = None) -> str:
         """格式化连续签到排行榜"""
+        if not ranking_data:
+            return "连续签到排行榜\n暂无连续签到数据"
         result = "连续签到排行榜\n"
         for i, (user_id, continuous_days) in enumerate(ranking_data, 1):
-            # 获取用户昵称
-            user_name = user_id
-            if db:
-                user_name = db.get_user_name(user_id, group_id) or user_id
+            # 获取用户昵称 - 关键修复
+            user_name = db.get_user_name(user_id, group_id) if db else user_id
             result += f"{i}. {user_name} - {continuous_days}天\n"
         return result.strip()
     
     @staticmethod
     def format_level_ranking(ranking_data: List[tuple], db: SignDatabase = None, group_id: str = None) -> str:
         """格式化等级排行榜"""
+        if not ranking_data:
+            return "等级排行榜\n暂无等级数据"
         result = "等级排行榜\n"
         for i, (user_id, level, exp) in enumerate(ranking_data, 1):
-            # 获取用户昵称
-            user_name = user_id
-            if db:
-                user_name = db.get_user_name(user_id, group_id) or user_id
+            # 获取用户昵称 - 关键修复
+            user_name = db.get_user_name(user_id, group_id) if db else user_id
             result += f"{i}. {user_name} - {level}级 ({exp}经验)\n"
         return result.strip()
     
     @staticmethod
     def format_world_ranking(ranking_data: List[tuple], db: SignDatabase = None, group_id: str = None) -> str:
         """格式化世界签到排行榜"""
+        if not ranking_data:
+            return "世界签到排行榜\n暂无世界签到数据"
         result = "世界签到排行榜\n"
         for i, (user_id, total_days) in enumerate(ranking_data, 1):
-            # 获取用户昵称
-            user_name = user_id
-            if db:
-                user_name = db.get_user_name(user_id, group_id) or user_id
+            # 获取用户昵称 - 关键修复
+            user_name = db.get_user_name(user_id, group_id) if db else user_id
             result += f"{i}. {user_name} - {total_days}天\n"
         return result.strip()
     
