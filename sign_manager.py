@@ -188,11 +188,12 @@ class SignManager:
     @staticmethod
     def format_my_ranking(group_total_rank: int, world_total_rank: int, 
                           continuous_rank: int, level_rank: int) -> str:
-        """格式化我的排名信息"""
+        """格式化我的排名信息
+        只显示世界排行榜、连续签到排行榜和等级排行榜的排名
+        """
         return (
             f"我的排行榜\n"
             f"====================\n"
-            f"本群总签到排名: 第{group_total_rank}名\n"
             f"世界总签到排名: 第{world_total_rank}名\n"
             f"连续签到排名: 第{continuous_rank}名\n"
             f"等级排名: 第{level_rank}名"

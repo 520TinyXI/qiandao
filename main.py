@@ -271,9 +271,9 @@ class AdvancedSignPlugin(Star):
             logger.error(f"查看签到商店失败: {str(e)}")
             yield event.plain_result("查看签到商店失败~请联系管理员检查日志")
             
-    @filter.command("排行榜")
-    async def ranking(self, event: AstrMessageEvent):
-        '''显示自己在所有排行榜中的排名'''
+    @filter.command("我的排名")
+    async def my_ranking(self, event: AstrMessageEvent):
+        '''显示自己在世界排行榜、连续签到排行榜和等级排行榜的排名'''
         try:
             user_id = event.get_sender_id()
             group_id = event.get_group_id() if event.message_obj.group_id else None
@@ -285,10 +285,9 @@ class AdvancedSignPlugin(Star):
                 return
                 
             # 获取各项排名
-            group_total_rank = self.db.get_group_sign_rank(group_id, user_id)
             world_total_rank = self.db.get_world_sign_rank(user_id)
             
-            # 修复连续签到排名计算
+            # 获取连续签到排名
             self.db.cursor.execute('''
                 SELECT COUNT(*) + 1 FROM sign_data
                 WHERE continuous_days > ?
@@ -296,7 +295,7 @@ class AdvancedSignPlugin(Star):
             continuous_rank_row = self.db.cursor.fetchone()
             continuous_rank = continuous_rank_row[0] if continuous_rank_row else 1
             
-            # 修复等级排名计算
+            # 获取等级排名
             self.db.cursor.execute('''
                 SELECT COUNT(*) + 1 FROM sign_data
                 WHERE level > ? OR (level = ? AND exp > ?)
@@ -306,7 +305,7 @@ class AdvancedSignPlugin(Star):
             
             # 格式化结果
             result_text = SignManager.format_my_ranking(
-                group_total_rank=group_total_rank,
+                group_total_rank=0,  # 不再显示本群排名
                 world_total_rank=world_total_rank,
                 continuous_rank=continuous_rank,
                 level_rank=level_rank
@@ -319,5 +318,5 @@ class AdvancedSignPlugin(Star):
                     os.remove(image_path)
 
         except Exception as e:
-            logger.error(f"获取排行榜失败: {str(e)}")
-            yield event.plain_result("获取排行榜失败~请联系管理员检查日志")
+            logger.error(f"获取我的排名失败: {str(e)}")
+            yield event.plain_result("获取我的排名失败~请联系管理员检查日志")

@@ -157,10 +157,12 @@ class SignDatabase:
         return self.cursor.fetchall()
         
     def get_continuous_sign_ranking(self, limit: int = 10) -> List[tuple]:
-        """获取连续签到排行榜（全局）"""
+        """获取连续签到排行榜（全局）
+        按连续签到次数降序排列，次数相同的按照先来后到排序
+        """
         self.cursor.execute('''
             SELECT user_id, continuous_days FROM sign_data
-            ORDER BY continuous_days DESC LIMIT ?
+            ORDER BY continuous_days DESC, last_sign ASC LIMIT ?
         ''', (limit,))
         return self.cursor.fetchall()
         
@@ -173,12 +175,21 @@ class SignDatabase:
         return self.cursor.fetchall()
         
     def get_world_sign_ranking(self, limit: int = 10) -> List[tuple]:
-        """获取世界签到排行榜"""
+        """获取世界签到排行榜
+        按总签到次数降序排列，次数相同则按当天签到时间早的排前面
+        """
         self.cursor.execute('''
-            SELECT user_id, total_days FROM sign_data
-            ORDER BY total_days DESC LIMIT ?
+            SELECT sd.user_id, sd.total_days, sh.timestamp
+            FROM sign_data sd
+            LEFT JOIN (
+                SELECT user_id, timestamp
+                FROM sign_history
+                WHERE sign_date = date('now')
+            ) sh ON sd.user_id = sh.user_id
+            ORDER BY sd.total_days DESC, sh.timestamp ASC
+            LIMIT ?
         ''', (limit,))
-        return self.cursor.fetchall()
+        return [(row[0], row[1]) for row in self.cursor.fetchall()]
         
     def get_group_sign_rank(self, group_id: str, user_id: str) -> int:
         """获取群内签到排名（修复版）"""
