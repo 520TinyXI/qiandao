@@ -238,7 +238,7 @@ class SignDatabase:
         return row[0] + 1 if row else 1  # 排名 = 比自己多的用户数 + 1
         
     def get_world_sign_rank(self, user_id: str) -> int:
-        """获取世界签到排名（修复版）"
+        """获取世界签到排名（修复版）"""
         # 获取当前用户的总签到天数
         self.cursor.execute('SELECT total_days FROM sign_data WHERE user_id = ?', (user_id,))
         user_total_days = self.cursor.fetchone()
@@ -270,4 +270,5 @@ class SignDatabase:
         
     def close(self):
         """关闭数据库连接"""
+
         self.conn.close()
