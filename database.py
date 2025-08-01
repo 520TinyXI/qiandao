@@ -154,16 +154,22 @@ class SignDatabase:
         按连续签到次数降序排列，次数相同的按照先来后到排序
         """
         self.cursor.execute('''
-            SELECT user_id, continuous_days FROM sign_data
-            ORDER BY continuous_days DESC, last_sign ASC LIMIT ?
+            SELECT sd.user_id, un.user_name, sd.continuous_days 
+            FROM sign_data sd
+            LEFT JOIN user_names un ON sd.user_id = un.user_id
+            ORDER BY sd.continuous_days DESC, sd.last_sign ASC 
+            LIMIT ?
         ''', (limit,))
         return self.cursor.fetchall()
         
     def get_level_ranking(self, limit: int = 10) -> List[tuple]:
         """获取等级排行榜（全局）"""
         self.cursor.execute('''
-            SELECT user_id, level, exp FROM sign_data
-            ORDER BY level DESC, exp DESC LIMIT ?
+            SELECT sd.user_id, un.user_name, sd.level, sd.exp
+            FROM sign_data sd
+            LEFT JOIN user_names un ON sd.user_id = un.user_id
+            ORDER BY sd.level DESC, sd.exp DESC 
+            LIMIT ?
         ''', (limit,))
         return self.cursor.fetchall()
         
@@ -172,17 +178,13 @@ class SignDatabase:
         按总签到次数降序排列，次数相同则按当天签到时间早的排前面
         """
         self.cursor.execute('''
-            SELECT sd.user_id, sd.total_days, sh.timestamp
+            SELECT sd.user_id, un.user_name, sd.total_days
             FROM sign_data sd
-            LEFT JOIN (
-                SELECT user_id, timestamp
-                FROM sign_history
-                WHERE sign_date = date('now')
-            ) sh ON sd.user_id = sh.user_id
-            ORDER BY sd.total_days DESC, sh.timestamp ASC
+            LEFT JOIN user_names un ON sd.user_id = un.user_id
+            ORDER BY sd.total_days DESC, sd.last_sign ASC
             LIMIT ?
         ''', (limit,))
-        return [(row[0], row[1]) for row in self.cursor.fetchall()]
+        return self.cursor.fetchall()
         
     def get_continuous_sign_rank(self, user_id: str) -> int:
         """获取连续签到排名（修复版）"""
