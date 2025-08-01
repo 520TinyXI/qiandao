@@ -248,7 +248,7 @@ class SignManager:
         """
         # 检查物品价格
         item_prices = {
-            "补签卡": 1000
+            "补签卡": 100
         }
         
         if item_name not in item_prices:
