@@ -284,7 +284,7 @@ class AdvancedSignPlugin(Star):
                 yield event.plain_result("您还没有签到过哦~")
                 return
                 
-            # 获取各项排名（使用修复后的方法）
+            # 获取各项排名
             group_total_rank = self.db.get_group_sign_rank(group_id, user_id)
             world_total_rank = self.db.get_world_sign_rank(user_id)
             

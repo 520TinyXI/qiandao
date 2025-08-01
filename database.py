@@ -194,7 +194,7 @@ class SignDatabase:
         # 计算群内比当前用户签到天数多的用户数量
         self.cursor.execute('''
             SELECT COUNT(*) FROM sign_data 
-            WHERE group_id = ? AND total_days > ?
+            WHERE group_id = ? AND total_days > ? 
         ''', (group_id, user_total_days))
         row = self.cursor.fetchone()
         return row[0] + 1 if row else 1  # 排名 = 比自己多的用户数 + 1
