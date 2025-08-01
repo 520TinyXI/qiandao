@@ -6,7 +6,7 @@ from datetime import datetime
 
 class SignDatabase:
     def __init__(self, plugin_dir: str):
-        db_dir = os.path.join(os.path.dirname(os.path.dirname(plugin_dir)), "plugins_db")
+        db_dir = os.path.join(plugin_dir, "plugins_db")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
         self.db_path = os.path.join(db_dir, "astrbot_plugin_advanced_sign.db")
