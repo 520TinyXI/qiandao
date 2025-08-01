@@ -172,7 +172,7 @@ class AdvancedSignPlugin(Star):
         '''购买物品'''
         try:
             user_id = event.get_sender_id()
-            args = event.get_message().split()[1:]
+            args = event.message_str.split()[1:]
             
             if len(args) < 2:
                 yield event.plain_result("命令格式错误，请使用: /购买 补签卡 数量")
@@ -207,7 +207,7 @@ class AdvancedSignPlugin(Star):
         try:
             user_id = event.get_sender_id()
             group_id = event.get_group_id() if event.message_obj.group_id else None
-            args = event.get_message().split()[1:]
+            args = event.message_str.split()[1:]
             
             try:
                 days = int(args[0]) if args else 1
@@ -245,3 +245,50 @@ class AdvancedSignPlugin(Star):
         except Exception as e:
             logger.error(f"查看背包失败: {str(e)}")
             yield event.plain_result("查看背包失败~请联系管理员检查日志")
+            
+    @filter.command("签到商店")
+    async def sign_shop(self, event: AstrMessageEvent):
+        '''签到商店'''
+        try:
+            # 显示商店商品信息
+            shop_items = [
+                ("补签卡", 100, "用于补签，每次补签消耗1张补签卡和10金币"),
+            ]
+            
+            result_text = "签到商店\n"
+            result_text += "=" * 20 + "\n"
+            for item_name, price, description in shop_items:
+                result_text += f"{item_name} - {price}金币\n{description}\n\n"
+            
+            image_path = await self.img_gen.create_sign_image(result_text)
+            if image_path:
+                yield event.image_result(image_path)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
+        except Exception as e:
+            logger.error(f"查看签到商店失败: {str(e)}")
+            yield event.plain_result("查看签到商店失败~请联系管理员检查日志")
+            
+    @filter.command("排行榜")
+    async def ranking(self, event: AstrMessageEvent):
+        '''排行榜指令列表'''
+        try:
+            result_text = (
+                "排行榜指令列表\n"
+                "=" * 20 + "\n"
+                "/总排行榜 - 查看总签到排行榜\n"
+                "/连续签到排行榜 - 查看连续签到排行榜\n"
+                "/等级排行榜 - 查看等级排行榜\n"
+                "/世界排行榜 - 查看世界总签到排行榜\n"
+            )
+            
+            image_path = await self.img_gen.create_sign_image(result_text)
+            if image_path:
+                yield event.image_result(image_path)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
+        except Exception as e:
+            logger.error(f"查看排行榜指令列表失败: {str(e)}")
+            yield event.plain_result("查看排行榜指令列表失败~请联系管理员检查日志")
