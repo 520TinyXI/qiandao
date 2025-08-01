@@ -94,25 +94,7 @@ class AdvancedSignPlugin(Star):
             logger.error(f"获取个人信息失败: {str(e)}")
             yield event.plain_result("获取个人信息失败~请联系管理员检查日志")
             
-    @filter.command("总排行榜")
-    async def total_ranking(self, event: AstrMessageEvent):
-        '''总签到排行榜'''
-        try:
-            group_id = event.get_group_id() if event.message_obj.group_id else None
-            
-            ranking_data = self.db.get_total_sign_ranking(10)
-            result_text = SignManager.format_total_ranking(ranking_data, self.db, group_id)
-            
-            image_path = await self.img_gen.create_sign_image(result_text)
-            if image_path:
-                yield event.image_result(image_path)
-                if os.path.exists(image_path):
-                    os.remove(image_path)
 
-        except Exception as e:
-            logger.error(f"获取总排行榜失败: {str(e)}")
-            yield event.plain_result("获取总排行榜失败~请联系管理员检查日志")
-            
     @filter.command("连续签到排行榜")
     async def continuous_ranking(self, event: AstrMessageEvent):
         '''连续签到排行榜'''

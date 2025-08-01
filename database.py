@@ -148,14 +148,7 @@ class SignDatabase:
                               (user_id, item_name, quantity))
         self.conn.commit()
         
-    def get_total_sign_ranking(self, limit: int = 10) -> List[tuple]:
-        """获取总签到排行榜（全局）"""
-        self.cursor.execute('''
-            SELECT user_id, total_days FROM sign_data
-            ORDER BY total_days DESC LIMIT ?
-        ''', (limit,))
-        return self.cursor.fetchall()
-        
+
     def get_continuous_sign_ranking(self, limit: int = 10) -> List[tuple]:
         """获取连续签到排行榜（全局）
         按连续签到次数降序排列，次数相同的按照先来后到排序

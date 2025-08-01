@@ -199,18 +199,7 @@ class SignManager:
             f"等级排名: 第{level_rank}名"
         )
     
-    @staticmethod
-    def format_total_ranking(ranking_data: List[tuple], db: SignDatabase = None, group_id: str = None) -> str:
-        """格式化总签到排行榜"""
-        if not ranking_data:
-            return "总签到排行榜\n暂无签到数据"
-        result = "总签到排行榜\n"
-        for i, (user_id, total_days) in enumerate(ranking_data, 1):
-            # 获取用户昵称 - 关键修复
-            user_name = db.get_user_name(user_id, group_id) if db else user_id
-            result += f"{i}. {user_name} - {total_days}天\n"
-        return result.strip()
-    
+
     @staticmethod
     def format_continuous_ranking(ranking_data: List[tuple], db: SignDatabase = None, group_id: str = None) -> str:
         """格式化连续签到排行榜"""
