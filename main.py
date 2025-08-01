@@ -266,16 +266,9 @@ class AdvancedSignPlugin(Star):
                 yield event.plain_result("您还没有签到过哦~")
                 return
                 
-            # 获取各项排名
+            # 获取各项排名（使用修复后的方法）
             world_total_rank = self.db.get_world_sign_rank(user_id)
-            
-            # 获取连续签到排名
-            self.db.cursor.execute('''
-                SELECT COUNT(*) + 1 FROM sign_data
-                WHERE continuous_days > ?
-            ''', (user_data['continuous_days'],))
-            continuous_rank_row = self.db.cursor.fetchone()
-            continuous_rank = continuous_rank_row[0] if continuous_rank_row else 1
+            continuous_rank = self.db.get_continuous_sign_rank(user_id)
             
             # 获取等级排名
             self.db.cursor.execute('''
@@ -287,7 +280,6 @@ class AdvancedSignPlugin(Star):
             
             # 格式化结果
             result_text = SignManager.format_my_ranking(
-                group_total_rank=0,  # 不再显示本群排名
                 world_total_rank=world_total_rank,
                 continuous_rank=continuous_rank,
                 level_rank=level_rank

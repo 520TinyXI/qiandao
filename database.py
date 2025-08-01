@@ -184,6 +184,37 @@ class SignDatabase:
         ''', (limit,))
         return [(row[0], row[1]) for row in self.cursor.fetchall()]
         
+    def get_continuous_sign_rank(self, user_id: str) -> int:
+        """获取连续签到排名（修复版）"""
+        # 获取当前用户的连续签到天数
+        self.cursor.execute('SELECT continuous_days FROM sign_data WHERE user_id = ?', (user_id,))
+        user_continuous_days = self.cursor.fetchone()
+        if not user_continuous_days:
+            return 0
+        user_continuous_days = user_continuous_days[0]
+        
+        # 计算比当前用户连续签到天数多的用户数量
+        self.cursor.execute('''
+            SELECT COUNT(*) FROM sign_data 
+            WHERE continuous_days > ? 
+        ''', (user_continuous_days,))
+        row = self.cursor.fetchone()
+        
+        # 计算与当前用户相同天数但更早签到的用户数量
+        self.cursor.execute('''
+            SELECT COUNT(*) FROM sign_data sd1
+            JOIN sign_history sh1 ON sd1.user_id = sh1.user_id
+            WHERE sd1.continuous_days = ? 
+            AND sh1.timestamp < (
+                SELECT sh2.timestamp FROM sign_history sh2
+                WHERE sh2.user_id = ?
+                ORDER BY sh2.timestamp DESC LIMIT 1
+            )
+        ''', (user_continuous_days, user_id))
+        same_days_row = self.cursor.fetchone()
+        
+        return (row[0] if row else 0) + (same_days_row[0] if same_days_row else 0) + 1
+        
     def get_group_sign_rank(self, group_id: str, user_id: str) -> int:
         """获取群内签到排名（修复版）"""
         # 如果没有群组ID，则返回世界排名
@@ -207,15 +238,35 @@ class SignDatabase:
         return row[0] + 1 if row else 1  # 排名 = 比自己多的用户数 + 1
         
     def get_world_sign_rank(self, user_id: str) -> int:
-        """获取世界签到排名"""
+        """获取世界签到排名（修复版）"
+        # 获取当前用户的总签到天数
+        self.cursor.execute('SELECT total_days FROM sign_data WHERE user_id = ?', (user_id,))
+        user_total_days = self.cursor.fetchone()
+        if not user_total_days:
+            return 0
+        user_total_days = user_total_days[0]
+        
+        # 计算比当前用户签到天数多的用户数量
         self.cursor.execute('''
-            SELECT COUNT(*) + 1 FROM sign_data 
-            WHERE total_days > (
-                SELECT total_days FROM sign_data WHERE user_id = ?
-            )
-        ''', (user_id,))
+            SELECT COUNT(*) FROM sign_data 
+            WHERE total_days > ? 
+        ''', (user_total_days,))
         row = self.cursor.fetchone()
-        return row[0] if row else 0
+        
+        # 计算与当前用户相同天数但更早签到的用户数量
+        self.cursor.execute('''
+            SELECT COUNT(*) FROM sign_data sd1
+            JOIN sign_history sh1 ON sd1.user_id = sh1.user_id
+            WHERE sd1.total_days = ? 
+            AND sh1.timestamp < (
+                SELECT sh2.timestamp FROM sign_history sh2
+                WHERE sh2.user_id = ?
+                ORDER BY sh2.timestamp DESC LIMIT 1
+            )
+        ''', (user_total_days, user_id))
+        same_days_row = self.cursor.fetchone()
+        
+        return (row[0] if row else 0) + (same_days_row[0] if same_days_row else 0) + 1
         
     def close(self):
         """关闭数据库连接"""
