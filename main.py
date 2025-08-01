@@ -278,9 +278,6 @@ class AdvancedSignPlugin(Star):
             user_id = event.get_sender_id()
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
-            # 添加调试日志
-            logger.debug(f"/排行榜指令: user_id={user_id}, group_id={group_id}")
-            
             # 获取用户数据
             user_data = self.db.get_user_data(user_id)
             if not user_data:
@@ -290,9 +287,6 @@ class AdvancedSignPlugin(Star):
             # 获取各项排名
             group_total_rank = self.db.get_group_sign_rank(group_id, user_id)
             world_total_rank = self.db.get_world_sign_rank(user_id)
-            
-            # 添加调试日志
-            logger.debug(f"/排行榜指令: group_total_rank={group_total_rank}, world_total_rank={world_total_rank}")
             
             # 修复连续签到排名计算
             self.db.cursor.execute('''

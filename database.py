@@ -3,6 +3,7 @@ import os
 import json
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+from astrbot.api import logger
 
 class SignDatabase:
     def __init__(self, plugin_dir: str):
@@ -198,9 +199,6 @@ class SignDatabase:
             WHERE group_id = ? AND total_days > ? 
         ''', (group_id, user_total_days))
         row = self.cursor.fetchone()
-        
-        # 添加调试日志
-        logger.debug(f"get_group_sign_rank: group_id={group_id}, user_id={user_id}, user_total_days={user_total_days}, count={row[0] if row else 'None'}")
         
         return row[0] + 1 if row else 1  # 排名 = 比自己多的用户数 + 1
         
