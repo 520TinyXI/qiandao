@@ -91,12 +91,14 @@ class SignDatabase:
         
     def update_user_name(self, user_id: str, user_name: str, group_id: str = None):
         """更新用户昵称"""
-        # 检查是否已存在
-        self.cursor.execute('SELECT user_id FROM user_names WHERE user_id = ? AND group_id = ?', (user_id, group_id))
+        # 检查是否已存在（基于user_id，忽略group_id）
+        self.cursor.execute('SELECT user_id FROM user_names WHERE user_id = ?', (user_id,))
         if self.cursor.fetchone():
-            self.cursor.execute('UPDATE user_names SET user_name = ? WHERE user_id = ? AND group_id = ?', 
-                              (user_name, user_id, group_id))
+            # 如果用户已存在，更新其昵称和群组ID
+            self.cursor.execute('UPDATE user_names SET user_name = ?, group_id = ? WHERE user_id = ?', 
+                              (user_name, group_id, user_id))
         else:
+            # 如果用户不存在，插入新记录
             self.cursor.execute('INSERT INTO user_names (user_id, user_name, group_id) VALUES (?, ?, ?)', 
                               (user_id, user_name, group_id))
         self.conn.commit()
