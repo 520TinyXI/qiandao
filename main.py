@@ -54,6 +54,38 @@ class AdvancedSignPlugin(Star):
             user_name = event.get_sender_name()
             self.db.update_user_name(user_id, user_name, group_id)
             
+            # 处理新获得的称号
+            new_titles = result.get('new_titles', [])
+            for title in new_titles:
+                self.db.add_user_title(user_id, title)
+            
+            # 如果获得了【七日先锋】或【永恒裁决者】称号，但之前有断签，则需要收回称号
+            if result['continuous_days'] < 7 and '七日先锋' not in new_titles:
+                # 检查用户是否拥有【七日先锋】称号
+                user_titles = self.db.get_user_titles(user_id)
+                for title, is_active in user_titles:
+                    if title == "七日先锋":
+                        # 移除称号
+                        self.db.cursor.execute(
+                            'DELETE FROM user_titles WHERE user_id = ? AND title = ?', 
+                            (user_id, "七日先锋")
+                        )
+                        self.db.conn.commit()
+                        break
+            
+            if result['continuous_days'] < 30 and '永恒裁决者' not in new_titles:
+                # 检查用户是否拥有【永恒裁决者】称号
+                user_titles = self.db.get_user_titles(user_id)
+                for title, is_active in user_titles:
+                    if title == "永恒裁决者":
+                        # 移除称号
+                        self.db.cursor.execute(
+                            'DELETE FROM user_titles WHERE user_id = ? AND title = ?', 
+                            (user_id, "永恒裁决者")
+                        )
+                        self.db.conn.commit()
+                        break
+            
             # 记录签到历史
             self.db.log_sign(user_id, result['exp'], result['coins'])
             
@@ -82,7 +114,10 @@ class AdvancedSignPlugin(Star):
                 yield event.plain_result("您还没有签到过哦~")
                 return
                 
-            result_text = SignManager.format_user_info(user_data)
+            # 获取用户当前激活的称号
+            active_title = self.db.get_active_title(user_id)
+                
+            result_text = SignManager.format_user_info(user_data, active_title)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -102,7 +137,7 @@ class AdvancedSignPlugin(Star):
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_continuous_sign_ranking(10)
-            result_text = SignManager.format_continuous_ranking(ranking_data)
+            result_text = SignManager.format_continuous_ranking(ranking_data, self.db)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -121,7 +156,7 @@ class AdvancedSignPlugin(Star):
             group_id = event.get_group_id() if event.message_obj.group_id else None
             
             ranking_data = self.db.get_level_ranking(10)
-            result_text = SignManager.format_level_ranking(ranking_data)
+            result_text = SignManager.format_level_ranking(ranking_data, self.db)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -138,7 +173,7 @@ class AdvancedSignPlugin(Star):
         '''世界总签到排行榜'''
         try:
             ranking_data = self.db.get_world_sign_ranking(10)
-            result_text = SignManager.format_world_ranking(ranking_data)
+            result_text = SignManager.format_world_ranking(ranking_data, self.db)
             
             image_path = await self.img_gen.create_sign_image(result_text)
             if image_path:
@@ -149,6 +184,101 @@ class AdvancedSignPlugin(Star):
         except Exception as e:
             logger.error(f"获取世界排行榜失败: {str(e)}")
             yield event.plain_result("获取世界排行榜失败~请联系管理员检查日志")
+            
+    @filter.command("称号")
+    async def titles_handler(self, event: AstrMessageEvent):
+        '''显示已获得的称号'''
+        try:
+            user_id = event.get_sender_id()
+            
+            # 获取用户所有称号
+            user_titles = self.db.get_user_titles(user_id)
+            
+            if not user_titles:
+                yield event.plain_result("您还没有获得任何称号哦~")
+                return
+            
+            # 格式化称号列表
+            title_list = "\n".join([f"【{title}】" for title, is_active in user_titles])
+            result_text = f"您已获得的称号:\n{title_list}"
+            
+            image_path = await self.img_gen.create_sign_image(result_text)
+            if image_path:
+                yield event.image_result(image_path)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+        
+        except Exception as e:
+            logger.error(f"获取称号列表失败: {str(e)}")
+            yield event.plain_result("获取称号列表失败~请联系管理员检查日志")
+            
+    @filter.command("使用称号")
+    async def use_title_handler(self, event: AstrMessageEvent):
+        '''使用称号'''
+        try:
+            user_id = event.get_sender_id()
+            args = event.message_str.split()[1:]
+            
+            if len(args) < 1:
+                yield event.plain_result("命令格式错误，请使用: /使用称号 称号名称")
+                return
+                
+            title_name = "".join(args)
+            
+            # 检查用户是否拥有该称号
+            user_titles = self.db.get_user_titles(user_id)
+            title_exists = any(title == title_name for title, _ in user_titles)
+            
+            if not title_exists:
+                yield event.plain_result(f"您还没有获得称号【{title_name}】哦~")
+                return
+            
+            # 激活称号
+            self.db.activate_title(user_id, title_name)
+            
+            yield event.plain_result(f"成功使用称号【{title_name}】!")
+            
+        except Exception as e:
+            logger.error(f"使用称号失败: {str(e)}")
+            yield event.plain_result("使用称号失败~请联系管理员检查日志")
+            
+    @filter.command("不使用称号")
+    async def unset_title_handler(self, event: AstrMessageEvent):
+        '''取消使用称号'''
+        try:
+            user_id = event.get_sender_id()
+            
+            # 取消激活所有称号
+            self.db.deactivate_all_titles(user_id)
+            
+            yield event.plain_result("已取消使用称号!")
+            
+        except Exception as e:
+            logger.error(f"取消使用称号失败: {str(e)}")
+            yield event.plain_result("取消使用称号失败~请联系管理员检查日志")
+            
+    @filter.command("称号大全")
+    async def all_titles_handler(self, event: AstrMessageEvent):
+        '''显示所有称号和获得途径'''
+        try:
+            # 定义所有称号和获得途径
+            all_titles = [
+                "【签到新人】 - 首次签到获得",
+                "【签到达人】 - 累计签到7天获得",
+                "【月神之誓】 - 累计签到30天获得",
+                "【七日先锋】 - 连续签到7天获得（断签会收回）",
+                "【永恒裁决者】 - 连续签到30天获得（断签会收回）"
+            ]
+            
+            # 格式化称号列表
+            title_list = "\n".join(all_titles)
+            result_text = f"所有称号和获得途径:\n{title_list}"
+            
+            yield event.plain_result(result_text)
+            
+        except Exception as e:
+            logger.error(f"获取称号大全失败: {str(e)}")
+            yield event.plain_result("获取称号大全失败~请联系管理员检查日志")
             
     @filter.command("购买")
     async def buy_item(self, event: AstrMessageEvent):

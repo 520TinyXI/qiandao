@@ -145,15 +145,40 @@ class SignManager:
         # 计算新等级
         new_level, next_level_exp = SignManager.calculate_level(total_exp, level)
         
+        # 检查是否获得新称号
+        new_titles = []
+        total_days = user_data.get('total_days', 0) + 1
+        
+        # 首次签到获得【签到新人】称号
+        if total_days == 1:
+            new_titles.append("签到新人")
+        
+        # 首次7天签到获得【签到达人】
+        if total_days == 7 and user_data.get('total_days', 0) < 7:
+            new_titles.append("签到达人")
+            
+        # 首次30天签到获得【月神之誓】
+        if total_days == 30 and user_data.get('total_days', 0) < 30:
+            new_titles.append("月神之誓")
+            
+        # 连续7天签到获得【七日先锋】（断签会收回）
+        if continuous_days == 7:
+            new_titles.append("七日先锋")
+            
+        # 连续30天签到获得【永恒裁决者】（断签会收回）
+        if continuous_days == 30:
+            new_titles.append("永恒裁决者")
+        
         return {
-            'total_days': user_data.get('total_days', 0) + 1,
+            'total_days': total_days,
             'continuous_days': continuous_days,
             'exp': total_exp,
             'level': new_level,
             'next_level_exp': next_level_exp,
             'coins': user_data.get('coins', 0) + coin_reward,
             'exp_reward': exp_reward,
-            'coin_reward': coin_reward
+            'coin_reward': coin_reward,
+            'new_titles': new_titles
         }
     
     @staticmethod
@@ -162,7 +187,8 @@ class SignManager:
         if not result:
             return "今天已经签到过啦~"
             
-        return (
+        # 构建基础结果信息
+        result_text = (
             f"签到成功！\n"
             f"获得经验：{result['exp_reward']}\n"
             f"获得金币：{result['coin_reward']}\n"
@@ -171,12 +197,25 @@ class SignManager:
             f"累计签到：{result['total_days']}天\n"
             f"连续签到：{result['continuous_days']}天"
         )
+        
+        # 添加新获得的称号信息
+        new_titles = result.get('new_titles', [])
+        if new_titles:
+            titles_str = "、".join([f"【{title}】" for title in new_titles])
+            result_text += f"\n获得新称号：{titles_str}"
+            
+        return result_text
     
     @staticmethod
-    def format_user_info(user_data: Dict[str, Any]) -> str:
+    def format_user_info(user_data: Dict[str, Any], active_title: str = "") -> str:
         """格式化用户信息 - 移除排名信息"""
+        # 构建用户名称显示
+        name_display = "个人信息"
+        if active_title:
+            name_display += f" 【{active_title}】"
+            
         return (
-            f"个人信息\n"
+            f"{name_display}\n"
             f"====================\n"
             f"等级：{user_data.get('level', 1)}\n"
             f"经验：{user_data.get('exp', 0)}/{user_data.get('next_level_exp', 200)}\n"
@@ -200,36 +239,45 @@ class SignManager:
     
 
     @staticmethod
-    def format_continuous_ranking(ranking_data: List[tuple]) -> str:
+    def format_continuous_ranking(ranking_data: List[tuple], db_instance=None) -> str:
         """格式化连续签到排行榜"""
         if not ranking_data:
             return "连续签到排行榜\n暂无连续签到数据"
         result = "连续签到排行榜\n"
         for i, (user_id, user_name, continuous_days) in enumerate(ranking_data, 1):
             display_name = user_name if user_name else user_id
-            result += f"{i}. {display_name} - {continuous_days}天\n"
+            # 获取用户当前激活的称号
+            active_title = db_instance.get_active_title(user_id) if db_instance else ""
+            title_display = f" 【{active_title}】" if active_title else ""
+            result += f"{i}. {display_name}{title_display} - {continuous_days}天\n"
         return result.strip()
     
     @staticmethod
-    def format_level_ranking(ranking_data: List[tuple]) -> str:
+    def format_level_ranking(ranking_data: List[tuple], db_instance=None) -> str:
         """格式化等级排行榜"""
         if not ranking_data:
             return "等级排行榜\n暂无等级数据"
         result = "等级排行榜\n"
         for i, (user_id, user_name, level, exp) in enumerate(ranking_data, 1):
             display_name = user_name if user_name else user_id
-            result += f"{i}. {display_name} - {level}级 ({exp}经验)\n"
+            # 获取用户当前激活的称号
+            active_title = db_instance.get_active_title(user_id) if db_instance else ""
+            title_display = f" 【{active_title}】" if active_title else ""
+            result += f"{i}. {display_name}{title_display} - {level}级 ({exp}经验)\n"
         return result.strip()
     
     @staticmethod
-    def format_world_ranking(ranking_data: List[tuple]) -> str:
+    def format_world_ranking(ranking_data: List[tuple], db_instance=None) -> str:
         """格式化世界签到排行榜"""
         if not ranking_data:
             return "世界签到排行榜\n暂无世界签到数据"
         result = "世界签到排行榜\n"
         for i, (user_id, user_name, total_days) in enumerate(ranking_data, 1):
             display_name = user_name if user_name else user_id
-            result += f"{i}. {display_name} - {total_days}天\n"
+            # 获取用户当前激活的称号
+            active_title = db_instance.get_active_title(user_id) if db_instance else ""
+            title_display = f" 【{active_title}】" if active_title else ""
+            result += f"{i}. {display_name}{title_display} - {total_days}天\n"
         return result.strip()
     
     @staticmethod

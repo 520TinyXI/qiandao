@@ -49,6 +49,13 @@ class SignDatabase:
                 user_id TEXT PRIMARY KEY,
                 user_name TEXT,
                 group_id TEXT
+            )''',
+            '''CREATE TABLE IF NOT EXISTS user_titles (
+                user_id TEXT,
+                title TEXT,
+                acquired_date TEXT DEFAULT CURRENT_TIMESTAMP,
+                is_active INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, title)
             )'''
         ]
         
@@ -276,3 +283,46 @@ class SignDatabase:
         """关闭数据库连接"""
 
         self.conn.close()
+        
+    def add_user_title(self, user_id: str, title: str):
+        """为用户添加称号"""
+        try:
+            self.cursor.execute(
+                'INSERT OR IGNORE INTO user_titles (user_id, title) VALUES (?, ?)', 
+                (user_id, title)
+            )
+            self.conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"添加用户称号失败: {str(e)}")
+            return False
+            
+    def get_user_titles(self, user_id: str) -> List[tuple]:
+        """获取用户的所有称号"""
+        self.cursor.execute('SELECT title, is_active FROM user_titles WHERE user_id = ?', (user_id,))
+        return self.cursor.fetchall()
+        
+    def activate_title(self, user_id: str, title: str):
+        """激活用户称号"""
+        self.cursor.execute(
+            'UPDATE user_titles SET is_active = 1 WHERE user_id = ? AND title = ?', 
+            (user_id, title)
+        )
+        self.conn.commit()
+        
+    def deactivate_all_titles(self, user_id: str):
+        """取消激活用户的所有称号"""
+        self.cursor.execute(
+            'UPDATE user_titles SET is_active = 0 WHERE user_id = ?', 
+            (user_id,)
+        )
+        self.conn.commit()
+        
+    def get_active_title(self, user_id: str) -> str:
+        """获取用户当前激活的称号"""
+        self.cursor.execute(
+            'SELECT title FROM user_titles WHERE user_id = ? AND is_active = 1', 
+            (user_id,)
+        )
+        row = self.cursor.fetchone()
+        return row[0] if row else ""
