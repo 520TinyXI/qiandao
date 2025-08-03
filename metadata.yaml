@@ -1,0 +1,5 @@
+name: astrbot_plugin_advanced_sign
+author: XiaoJie
+version: 1.0.0
+description: 一个高级签到插件，包含等级系统、排行榜、商店系统
+repository: https://github.com/XiaoJie/astrbot_plugin_advanced_sign
